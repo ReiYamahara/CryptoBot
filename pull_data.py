@@ -8,4 +8,4 @@ df = pd.read_csv('master_q4/XBTUSDT_5.csv', header=None, names=csv_headers)
 print(df.head())
 print(df.columns)
 print(len(df))
-
+print(df['time'])

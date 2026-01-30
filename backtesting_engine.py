@@ -1,3 +1,5 @@
+import pandas as pd
+
 class BackTestEngine:
     def __init__(self, initial_capital=1000.00, fee=0.0006):
         self.cash = initial_capital
@@ -7,7 +9,8 @@ class BackTestEngine:
         self.equity_curve = []
 
     def run(self, data, strategy):
-        
+        if not 'time' in data.columns:
+            data['time'] = pd.to_datetime(data['timestamp'], unit='s')
         for i in range(len(data)):
             row = data.iloc[i]
             price = row['close']
@@ -22,7 +25,7 @@ class BackTestEngine:
     def rebalance(self, target_pct, price, time):
         cur_total_val = self.cash + (self.shares * price)
         target_holding_val = cur_total_val * target_pct
-
+        
         cur_holding_val = self.shares * price
         diff_value = target_holding_val - cur_holding_val
 
@@ -31,25 +34,18 @@ class BackTestEngine:
         
         # buy more
         if diff_value > 0:
-            qty_to_buy = diff_value/price
-            if self.cash >= diff_value:
-                self.shares += qty_to_buy
-                self.cash -= diff_value * (1 + self.fee)
-                print(f"[{time}] BUY: {qty_to_buy:.4f} shares @ ${price:.2f}")
-            elif self.cash > 0:
-                # Calculate max buyable amount: Cash = Amount * (1 + Fee)
-                # Amount = Cash / (1 + Fee)
-                max_buy_val = self.cash / (1 + self.fee)
-                qty_to_buy = max_buy_val / price
-                
-                self.shares += qty_to_buy
-                self.cash = 0 # Spent it all
-                print(f"[{time}] BUY (Max): {qty_to_buy:.4f} shares @ ${price:.2f}")
-            else:
-                print("Not enough cash")
+            available_for_trade = min(diff_value, self.cash / (1 + self.fee))
+            qty_to_buy = available_for_trade / price
+            fee_cost = (qty_to_buy * price) * self.fee
+            self.shares += qty_to_buy
+            self.cash -= (qty_to_buy * price) + fee_cost
+            print(f"[{time}] BUY: {qty_to_buy:.4f} shares @ ${price:.2f}")
+
         else: # sell off
-            qty_to_sell = abs(diff_value)/price
+            qty_to_sell = min(abs(diff_value) / price, self.shares)
+            notional_received = qty_to_sell * price
+            fee_cost = notional_received * self.fee
             self.shares -= qty_to_sell
-            self.cash += abs(diff_value) * (1-self.fee)
+            self.cash += (notional_received - fee_cost)
             print(f"[{time}] SELL: {qty_to_sell:.4f} shares @ ${price:.2f}")
         
