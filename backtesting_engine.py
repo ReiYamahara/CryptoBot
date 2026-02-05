@@ -85,6 +85,7 @@ class BackTestEngine:
                     self.position_open_time = time
                 self.trade_log.append({'time': time, 'side': 'BUY'})
                 self._update_rolling_volume(time, qty_to_buy * price)
+                print(f"[{time}] BUY: {qty_to_buy:.4f} shares @ ${price:.2f}")
 
         else: # sell off
             qty_to_sell = min(abs(diff_value) / price, self.shares)
@@ -105,4 +106,5 @@ class BackTestEngine:
                         self.holding_periods_sec.append(hold_seconds)
                         self.position_open_time = None
                     self.avg_entry_price = 0.0
+                print(f"[{time}] SELL: {qty_to_sell:.4f} shares @ ${price:.2f}")
         
