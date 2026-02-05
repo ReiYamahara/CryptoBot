@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # CONFIG
 WINDOW = 100
-Z_THRESHOLD = 3
+Z_THRESHOLD = 3 
 STOP_LOSS_PCT = 0.02 # 2%
 POSITION_SIZE = 1.0
 INITIAL_CAPITAL = 10000.0
