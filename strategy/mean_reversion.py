@@ -1,18 +1,20 @@
 import numpy as np
 from collections import deque
-from strategy_base import StrategyBase
+from strategy.strategy_base import StrategyBase
 
 class MeanReversionStrategy(StrategyBase):
-    def __init__(self, window=50, z_threshold=2.0, stop_loss_pct=0.05):
+    def __init__(self, window=50, z_threshold=2.0, stop_loss_pct=0.05, position_size=1.0):
         super().__init__("MeanReversion_LiveReady")
         self.window = window
         self.z_threshold = z_threshold
         self.stop_loss_pct = stop_loss_pct
+        self.position_size = max(0.0, min(1.0, position_size))
         
         self.price_history = deque(maxlen=window) 
         
         self.position = 0.0 # 0.0 = Neutral, 1.0 = Long
         self.entry_price = 0.0
+        self.stop_loss_events = []
 
     def on_data(self, row):
         """
@@ -32,7 +34,7 @@ class MeanReversionStrategy(StrategyBase):
                 self.entry_price = 0.0
                 self.price_history.append(current_price)
                 stop_time = row['time'] if 'time' in row else 'unknown time'
-                print(f"STOP LOSS @ {stop_time}")
+                self.stop_loss_events.append((stop_time, current_price))
                 return self.position
 
         # Converting queue to array for faster math
@@ -53,7 +55,7 @@ class MeanReversionStrategy(StrategyBase):
 
         # 4. Trading Logic
         if z_score < -self.z_threshold:
-            self.position = 1.0 # Buy
+            self.position = self.position_size # Buy
             self.entry_price = current_price
         elif z_score >= 0:
             self.position = 0.0 # Sell
