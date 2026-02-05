@@ -1,4 +1,5 @@
 myenv/
 .env/
+.env.*
 .DS_Store
 master_q4/

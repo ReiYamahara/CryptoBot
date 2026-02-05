@@ -11,3 +11,7 @@ class StrategyBase:
         Output: Target Position % (0.0 to 1.0)
         """
         raise NotImplementedError
+    
+    def get_name(self):
+        "Return a string with the name of the strategy"
+        raise NotImplementedError

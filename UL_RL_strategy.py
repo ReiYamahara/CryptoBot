@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
 from tqdm import tqdm
+from sklearn.preprocessing import StandardScaler
 
 
 # DATA SETUP AND CLEANING
@@ -15,12 +16,12 @@ df = pd.read_csv('Bitcoin Data/XBTUSDT_1.csv', header=None, names=csv_headers)
 
 # using last 2 years of data
 df['time'] = pd.to_datetime(df['timestamp'], unit='s')
-df= df[df['time'] >= '2023-01-01']
-print(df.head())
+df= df[df['time'] < '2025-01-01']
+print(len(df))
 
 # creating core features
 df['log_return'] = np.log(df['close']/df['close'].shift(1))
-df['sma_volume'] = df['volume'].rolling(window=60).mean()
+df['sma_volume'] = df['volume'].rolling(window=64).mean()
 df['relative_volume'] = df['volume']/df['sma_volume']
 df['volatility'] = (df['high']-df['low'])/df['close']
 def calculate_rsi(df, period=14):
@@ -114,16 +115,16 @@ class LSTM_VAE(nn.Module):
         x_recon = self.decode(z)
         return x_recon, mu, logvar, z
 
-def vae_loss_function(recon_x, x, mu, logvar, kl_weight=0.0001):
+def vae_loss_function(recon_x, x, mu, logvar, kl_weight=0.001):
     """
     1. MSE Loss for reconstruction (Regression).
     2. KL Divergence for regularization.
     """
     # MSE: Compare original matrix vs reconstructed matrix
-    recon_loss = F.mse_loss(recon_x, x, reduction='sum')
+    recon_loss = F.mse_loss(recon_x, x, reduction='mean')
 
     # KL Divergence: -0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+    kl_loss = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
 
     # IMPORTANT: Financial data is noisy. 
     # If KL is too strong, the model ignores the data and outputs flat zeros (Posterior Collapse).
@@ -151,20 +152,30 @@ class RollingWindowDataset(Dataset):
         return self.data[idx : idx + self.window_size]
 
 
-def train_vae(dataframe, window_size=64, batch_size=64, epochs=10, save_path="vae_model.pth"):
+def train_vae(dataframe, window_size=64, batch_size=64, epochs=20, save_path="vae_model.pth"):
     # 1. SETUP DEVICE (Use GPU if available, otherwise CPU)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Training on: {device}")
 
     # 2. PREPARE DATA
-    # Convert DataFrame to numpy array (drop timestamp columns first!)
-    data = df[['log_return', 'relative_volume', 'volatility', 'rsi']]
-    data.replace([np.inf, -np.inf], np.nan, inplace=True)
-    data.ffill(inplace=True)
-    data.fillna(0, inplace=True)
+
+    # data.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # data.ffill(inplace=True)
+    # data.fillna(0, inplace=True)
+    data = dataframe[['log_return', 'relative_volume', 'volatility', 'rsi']]
+    data = data.iloc[64:]
     data_values = data.values
+
+    lower = data.quantile(0.01)
+    upper = data.quantile(0.99)
+    data = data.clip(lower=lower, upper=upper, axis=1)
+   
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(data)
+    import joblib
+    joblib.dump(scaler, 'vae_scaler.pkl')
     
-    dataset = RollingWindowDataset(data_values, window_size)
+    dataset = RollingWindowDataset(scaled_data, window_size)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # 3. INITIALIZE MODEL
@@ -174,11 +185,19 @@ def train_vae(dataframe, window_size=64, batch_size=64, epochs=10, save_path="va
 
     # 4. OPTIMIZER
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    max_kl_weight = 0.001
 
     # 5. TRAINING LOOP
     for epoch in range(epochs):
         model.train() # Set mode to training (enables dropout, gradients)
         total_loss = 0
+        total_recon = 0
+        total_kl = 0
+
+        if epoch < 10:
+            kl_weight = (epoch / 10) * max_kl_weight
+        else:
+            kl_weight = max_kl_weight
         
         progress_bar = tqdm(dataloader, desc=f"Epoch {epoch+1}/{epochs}")
         
@@ -194,27 +213,33 @@ def train_vae(dataframe, window_size=64, batch_size=64, epochs=10, save_path="va
             
             # --- CALCULATE LOSS ---
             # Using the function we defined earlier
-            loss, recon_loss, kl_loss = vae_loss_function(recon_batch, batch, mu, logvar)
+            loss, recon_loss, kl_loss = vae_loss_function(recon_batch, batch, mu, logvar, kl_weight)
             
             # --- BACKPROPAGATION ---
             loss.backward()  # Calculate gradients
             optimizer.step() # Update weights
+
+            # --- GRADIENT CLIPPING ---
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             
             # Update progress bar
             total_loss += loss.item()
-            progress_bar.set_postfix({'loss': loss.item()})
+            progress_bar.set_postfix({'recon loss': recon_loss.item(), 'kl loss': kl_loss.item()})
             
         avg_loss = total_loss / len(dataloader)
         print(f"Epoch {epoch+1} Complete. Average Loss: {avg_loss:.6f}")
+        torch.save(model, save_path)
+        print(f"Current model saved to {save_path} after {epoch+1} epochs of training")
 
-    # 6. SAVE THE TRAINED MODEL
+    # 6. SAVE THE FINAL TRAINED MODEL
     torch.save(model, save_path)
-    print(f"Model saved to {save_path}")
+    print(f"Final model saved to {save_path} after all {epochs} epochs of training")
     return model
 
-trained_model = train_vae(df)
+if __name__ == "__main__":
+    print("Starting training process...")
+    trained_model = train_vae(df)
 
 def run_vae(input, batch_size):
     # data should be size (batch size, 64, 4)
     pass
-
