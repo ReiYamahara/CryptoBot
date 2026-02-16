@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def compute_metrics(results, engine, data):
+def compute_metrics(results, engine, data, strategy=None):
     results = results.sort_values('time').copy()
     results['time'] = pd.to_datetime(results['time'])
     results['ret'] = results['value'].pct_change().fillna(0.0)
@@ -97,4 +97,5 @@ def compute_metrics(results, engine, data):
         'total_traded_notional': total_traded_notional,
         'avg_monthly_traded_notional': avg_monthly_traded_notional,
         'total_fees': total_fees,
+        'stop_loss_hits': len(strategy.stop_loss_events) if strategy is not None else np.nan,
     }
