@@ -138,7 +138,7 @@ if __name__ == "__main__":
     cols_to_keep = ['timestamp', 'symbol', 'close', 'high', 'low'] + \
                 [c for c in final_df.columns if c not in ['open', 'high', 'low', 'volume', 'trades', 'timestamp', 'symbol', 'close']]
     final_df = final_df[cols_to_keep]
-    final_df.to_csv('MLP_VAE_Strategy/features_dataset.csv')
+    final_df.to_csv('MLP_VAE_Strategy/train_val_test_datasets/features_dataset.csv')
 
 
     print("Processing Complete!")
