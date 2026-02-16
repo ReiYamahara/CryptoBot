@@ -6,7 +6,7 @@ import joblib
 
 # 1. LOAD AND PREP
 print("Loading dataset...")
-df = pd.read_csv("MLP_VAE_Strategy/features_dataset.csv")
+df = pd.read_csv("MLP_VAE_Strategy/train_val_test_datasets/features_dataset.csv")
 
 # Force UTC and Sort
 df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
@@ -57,9 +57,9 @@ test[feature_cols]  = scaler.transform(test[feature_cols])
 # 5. SAVE SPLITS
 # ---------------------------------------------------------
 print("\nSAVING DATASETS...")
-train.to_csv("MLP_VAE_Strategy/train_data.csv", index=False)
-val.to_csv("MLP_VAE_Strategy/val_data.csv", index=False)
-test.to_csv("MLP_VAE_Strategy/test_data.csv", index=False)
+train.to_csv("MLP_VAE_Strategy/train_val_test_datasets/train_data.csv", index=False)
+val.to_csv("MLP_VAE_Strategy/train_val_test_datasets/val_data.csv", index=False)
+test.to_csv("MLP_VAE_Strategy/train_val_test_datasets/test_data.csv", index=False)
 
 print(f"1. Training Set (2021-2024):  {len(train)} rows")
 print(f"2. Validation Set (H1 2025):  {len(val)} rows")

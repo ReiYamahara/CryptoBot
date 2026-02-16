@@ -1,5 +1,5 @@
 from MLP_VAE_Strategy.MLP_VAE_Strategy import MLPStrategy
-from backtesting_engine import BackTestEngine 
+from backtest.backtesting_engine import BackTestEngine 
 import torch
 import pandas as pd
 import numpy as np
@@ -8,8 +8,8 @@ import os
 import joblib
 
 # --- CONFIG ---
-MLP_PATH = "MLP_VAE_Strategy/mlp_model_best.pth"
-VAE_PATH = "MLP_VAE_Strategy/vae_model_mlp.pth"
+MLP_PATH = "MLP_VAE_Strategy/model&scalers&configs/mlp_model_best.pth"
+VAE_PATH = "MLP_VAE_Strategy/model&scalers&configs/vae_model_mlp.pth"
 
 # NOTE: Scalers are now loaded internally by the Strategy class
 # from "MLP_VAE_Strategy/tech_scaler.pkl" and "vae_scaler.pkl"

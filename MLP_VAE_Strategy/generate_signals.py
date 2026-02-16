@@ -60,7 +60,7 @@ def load_vae_model(input_dim):
         hidden_2=config['hidden_2'],
         latent_dim=config['latent_dim']
     ).to(DEVICE)
-    model.load_state_dict(torch.load("MLP_VAE_Strategy/vae_model_mlp.pth", map_location=DEVICE, weights_only=True))
+    model.load_state_dict(torch.load("MLP_VAE_Strategy/model&scalers&configs/vae_model_mlp.pth", map_location=DEVICE, weights_only=True))
     model.eval()
     return model
 
@@ -184,9 +184,9 @@ def generate_hybrid_labels(df, model, feature_cols):
 # ---------------------------------------------------------
 def main():
     print("Loading data...")
-    train_df = pd.read_csv("MLP_VAE_Strategy/train_data.csv")
-    val_df   = pd.read_csv("MLP_VAE_Strategy/val_data.csv")
-    test_df  = pd.read_csv("MLP_VAE_Strategy/test_data.csv")
+    train_df = pd.read_csv("MLP_VAE_Strategy/train_val_test_datasets/train_data.csv")
+    val_df   = pd.read_csv("MLP_VAE_Strategy/train_val_test_datasets/val_data.csv")
+    test_df  = pd.read_csv("MLP_VAE_Strategy/train_val_test_datasets/test_data.csv")
     
     feature_cols = joblib.load("MLP_VAE_Strategy/feature_columns.pkl")
     input_dim = len(feature_cols)
@@ -204,9 +204,9 @@ def main():
     print("\n--- Processing TEST ---")
     test_labeled = generate_hybrid_labels(test_df, model, feature_cols)
     
-    train_labeled.to_csv("MLP_VAE_Strategy/train_labeled.csv", index=False)
-    val_labeled.to_csv("MLP_VAE_Strategy/val_labeled.csv", index=False)
-    test_labeled.to_csv("MLP_VAE_Strategy/test_labeled.csv", index=False)
+    train_labeled.to_csv("MLP_VAE_Strategy/train_val_test_datasets/train_labeled.csv", index=False)
+    val_labeled.to_csv("MLP_VAE_Strategy/train_val_test_datasets/val_labeled.csv", index=False)
+    test_labeled.to_csv("MLP_VAE_Strategy/train_val_test_datasets/test_labeled.csv", index=False)
     
     print("\nProcessing Complete. Dynamic ATR TBM Labels Generated!")
 

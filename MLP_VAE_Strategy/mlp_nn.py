@@ -181,7 +181,7 @@ def main():
     # 5. FINAL REPORT WITH THRESHOLDS
     # ---------------------------------------------------------
     print(f"\nLoading Best Model for Threshold Eval (Threshold={CONFIDENCE_THRESHOLD})...")
-    model.load_state_dict(torch.load("MLP_VAE_Strategy/mlp_model_best.pth", weights_only=True))
+    model.load_state_dict(torch.load("MLP_VAE_Strategy/model&scalers&configs/mlp_model_best.pth", weights_only=True))
     model.eval()
     
     all_preds, all_targets = [], []
@@ -216,8 +216,6 @@ def main():
     plt.title(f"Confusion Matrix (Threshold > {CONFIDENCE_THRESHOLD})")
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
-    plt.savefig("MLP_VAE_Strategy/confusion_matrix.png")
-    print("Confusion matrix saved to MLP_VAE_Strategy/confusion_matrix.png")
 
 if __name__ == "__main__":
     main()

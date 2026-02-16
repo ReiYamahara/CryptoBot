@@ -1,0 +1,12 @@
+Pipeline:
+Current pipeline:
+1. Use get_data.py to compile the dataset with all the tokens we are using
+2. (compute_features.py) Compute the features we are using
+3. (train_test_splitting.py) Split into train, test and validation. Also fit a scaler on the train data and transform all three of the datasets
+4. (vae_mlp.py) Train the VAE and acquire the vae error parameter
+5. (generate_signals.py) Generate buy/sell/hold signals using a triple barrier (taking average true range). We check 12 candles forward, if the price exceeds the upper barrier before the lower one, we label it as buy, and vice versa. If it doesn't escape either barrier then label as hold. And also use vae_error to check volatility. If current vae_error is outside of 3sd range, then hold. Use 12 hour forward return to feed to these thresholds for signals.
+6. (mlp_nn.py) Train the MLP using the signals, undersampling the hold class so that the training set doesn’t have class imbalance issues
+7. (MLP_VAE_Strategy.py) Adapt the trained model into the crypto bot standard class form with on_data function, etc.
+8. (optimize_threshold.py) Find the best confidence threshold for the model buy output (eg. if threshold is 30% then anytime the model outputs a buy probability above 0.3, regardless of the hold or sell proabilities, it will output buy)
+8. (backtest_mlp.py) backtest the MLP and also grid search the confidence threshold to ensure optimality
+9. (TODO) run the algorithm on the live execution engine

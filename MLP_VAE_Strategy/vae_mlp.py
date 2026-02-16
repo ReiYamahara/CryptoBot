@@ -125,8 +125,8 @@ def main():
 
     # 2. LOAD DATA
     print("Loading data...")
-    train_data = load_data("MLP_VAE_Strategy/train_data.csv", feature_cols)
-    val_data = load_data("MLP_VAE_Strategy/val_data.csv", feature_cols)
+    train_data = load_data("MLP_VAE_Strategy/train_val_test_datasets/train_data.csv", feature_cols)
+    val_data = load_data("MLP_VAE_Strategy/train_val_test_datasets/val_data.csv", feature_cols)
     
     input_dim = train_data.shape[1]
     print(f"Data Loaded. Input Features: {input_dim}")
@@ -163,10 +163,10 @@ def main():
     # Save Model Weights
     final_model = MarketVAE(input_dim, best_config['hidden_1'], best_config['hidden_2'], best_config['latent_dim'])
     final_model.load_state_dict(best_model_state)
-    torch.save(final_model.state_dict(), "MLP_VAE_Strategy/vae_model_mlp.pth")
+    torch.save(final_model.state_dict(), "MLP_VAE_Strategy/model&scalers&configs/vae_model_mlp.pth")
     
     # Save Config Dictionary (Need this for Backtesting!)
-    joblib.dump(best_config, "MLP_VAE_Strategy/vae_config.pkl") 
+    joblib.dump(best_config, "MLP_VAE_Strategy/model&scalers&configs/vae_config.pkl") 
     print("\nSaved: vae_model_mlp.pth & vae_config.pkl")
 
 if __name__ == "__main__":

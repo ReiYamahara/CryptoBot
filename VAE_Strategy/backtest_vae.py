@@ -1,5 +1,5 @@
 from VAE_mean_reversion import *
-from backtesting_engine import *
+from backtest.backtesting_engine import BackTestEngine
 
 import pandas as pd
 import numpy as np
@@ -12,7 +12,7 @@ vae_model = torch.load(model_path, map_location=device)
 vae_model.eval()
 print("Model weights loaded successfully.")
 
-scaler = joblib.load('vae_scaler.pkl')
+scaler = joblib.load('MLP_VAE_Strategy/model&scalers&configs/vae_scaler.pkl')
 device = torch.device("cpu")
 
 strategy = SmartMeanReversion(vae_model=vae_model, scaler=scaler, device=device, risk_threshold=4.0)

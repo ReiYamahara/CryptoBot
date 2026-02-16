@@ -2,7 +2,7 @@ from pathlib import Path
 import pandas as pd
 
 # folder containing your 52 csv files
-DATA_DIR = Path("MLP_VAE_Strategy/token_data")   # change if needed
+DATA_DIR = Path("MLP_VAE_Strategy/token_dat_raw")   # change if needed
 
 cols = ["timestamp", "open", "high", "low", "close", "volume", "trades"]
 

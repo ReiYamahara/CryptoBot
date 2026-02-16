@@ -7,8 +7,8 @@ import joblib
 
 # --- CONFIGURATION ---
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
-VAL_FILE = "MLP_VAE_Strategy/val_labeled.csv"
-MODEL_FILE = "MLP_VAE_Strategy/mlp_model_best.pth"
+VAL_FILE = "MLP_VAE_Strategy/train_val_test_datasets/val_labeled.csv"
+MODEL_FILE = "MLP_VAE_Strategy/model&scalers&configs/mlp_model_best.pth"
 FEATURE_MAP = "MLP_VAE_Strategy/feature_columns.pkl"
 
 # --- NEW FILTERS ---
@@ -132,10 +132,6 @@ def main():
     # 3. Display Results
     results_df = pd.DataFrame(results)
     print(results_df.to_string(index=False))
-    
-    # Save to CSV
-    results_df.to_csv("MLP_VAE_Strategy/buy_only_btc_grid_search.csv", index=False)
-    print("\nSaved full results to MLP_VAE_Strategy/buy_only_btc_grid_search.csv")
 
 if __name__ == "__main__":
     main()
