@@ -1,10 +1,10 @@
-from collections import deque
 import pandas as pd
 
 class BackTestEngine:
     def __init__(self, initial_capital=10000.00, fee=0.001):
         self.cash = initial_capital
-        self.fee = fee # 0.0 disables fees; non-zero uses tiered taker fees
+        self.fee = fee # 0.0 disables fees; non-zero uses fixed 0.35% taker fee
+        self.print_trades = print_trades
         self.shares = 0.0
         self.portfolio_value = initial_capital
         self.equity_curve = []
@@ -14,9 +14,10 @@ class BackTestEngine:
         self.position_open_time = None
         self.holding_periods_sec = []
         self.total_fees = 0.0
+        self.total_traded_notional = 0.0
         self.last_target_pct = None
         self.fee_tiers = [
-            (0, 0.0000),       # $0–$10k => 0.40%
+            (0, 0.0040),       # $0–$10k => 0.40%
             (10_000, 0.0035),  # $10k–$50k => 0.35%
             (50_000, 0.0024),  # $50k–$100k => 0.24%
             (100_000, 0.0022), # $100k–$250k => 0.22%
@@ -34,13 +35,7 @@ class BackTestEngine:
         self.volume_30d += notional
 
     def _current_taker_fee(self):
-        if self.fee == 0:
-            return 0.0
-        fee_rate = self.fee_tiers[0][1]
-        for threshold, tier_fee in self.fee_tiers:
-            if self.volume_30d >= threshold:
-                fee_rate = tier_fee
-        return fee_rate
+        return 0.0 if self.fee == 0 else 0.0035
 
     def run(self, data, strategy):
         if not 'time' in data.columns:
@@ -73,18 +68,21 @@ class BackTestEngine:
             available_for_trade = min(diff_value, self.cash / (1 + fee_rate))
             qty_to_buy = available_for_trade / price
             if qty_to_buy > 0:
-                fee_cost = (qty_to_buy * price) * fee_rate
+                notional = qty_to_buy * price
+                fee_cost = notional * fee_rate
                 self.total_fees += fee_cost
+                self.total_traded_notional += notional
                 prev_shares = self.shares
                 prev_cost = prev_shares * self.avg_entry_price
                 self.shares += qty_to_buy
-                self.cash -= (qty_to_buy * price) + fee_cost
-                total_cost = prev_cost + (qty_to_buy * price) + fee_cost
+                self.cash -= notional + fee_cost
+                total_cost = prev_cost + notional + fee_cost
                 self.avg_entry_price = total_cost / self.shares if self.shares > 0 else 0.0
                 if prev_shares == 0:
                     self.position_open_time = time
-                self.trade_log.append({'time': time, 'side': 'BUY'})
-                self._update_rolling_volume(time, qty_to_buy * price)
+                self.trade_log.append({'time': time, 'side': 'BUY', 'notional': notional})
+                if self.print_trades:
+                    print(f"[{time}] BUY: {qty_to_buy:.4f} shares @ ${price:.2f}")
 
         else: # sell off
             qty_to_sell = min(abs(diff_value) / price, self.shares)
@@ -93,16 +91,18 @@ class BackTestEngine:
                 fee_rate = self._current_taker_fee()
                 fee_cost = notional_received * fee_rate
                 self.total_fees += fee_cost
+                self.total_traded_notional += notional_received
                 realized_pnl = (notional_received - fee_cost) - (qty_to_sell * self.avg_entry_price)
                 self.shares -= qty_to_sell
                 self.cash += notional_received - fee_cost
                 self.realized_pnls.append(realized_pnl)
-                self.trade_log.append({'time': time, 'side': 'SELL', 'realized_pnl': realized_pnl})
-                self._update_rolling_volume(time, notional_received)
+                self.trade_log.append({'time': time, 'side': 'SELL', 'realized_pnl': realized_pnl, 'notional': notional_received})
                 if self.shares == 0:
                     if self.position_open_time is not None:
                         hold_seconds = (time - self.position_open_time).total_seconds()
                         self.holding_periods_sec.append(hold_seconds)
                         self.position_open_time = None
                     self.avg_entry_price = 0.0
+                if self.print_trades:
+                    print(f"[{time}] SELL: {qty_to_sell:.4f} shares @ ${price:.2f}")
         
