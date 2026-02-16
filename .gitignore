@@ -6,3 +6,5 @@ master_q4/
 MLP_VAE_Strategy/*.csv
 hourly_datasets/
 MLP_VAE_Strategy/train_val_test_datasets/*.csv
+__pycache__/
+*.pyc
