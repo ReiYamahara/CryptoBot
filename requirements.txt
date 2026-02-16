@@ -5,3 +5,9 @@ requests
 websockets
 sortedcontainers
 pyarrow
+pandas_ta
+joblib
+torch
+tqdm
+scikit-learn
+seaborn
