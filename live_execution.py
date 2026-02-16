@@ -8,10 +8,10 @@ import math
 from state_manager import StateManager
 
 # --- CONFIGURATION ---
-SYMBOL = 'BTC/USDT'
+SYMBOL = 'BTC/USD'
 TIMEFRAME = '1m'
 COIN = 'BTC'
-QUOTE = 'USDT'
+QUOTE = 'USD'
 
 # Load Environment
 load_dotenv()
@@ -72,7 +72,7 @@ while True:
     wait_for_next_minute()
     
     # 1. Fetch Shared Data
-    data = fetch_live_data(SYMBOL, TIMEFRAME, limit=100)
+    data = fetch_live_data(SYMBOL, TIMEFRAME, limit=150)
     if data.empty: continue
 
     # 2. Get Portfolio State

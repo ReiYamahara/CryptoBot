@@ -2,7 +2,7 @@ from collections import deque
 import pandas as pd
 
 class BackTestEngine:
-    def __init__(self, initial_capital=1000.00, fee=0.00):
+    def __init__(self, initial_capital=10000.00, fee=0.001):
         self.cash = initial_capital
         self.fee = fee # 0.0 disables fees; non-zero uses tiered taker fees
         self.shares = 0.0
@@ -16,7 +16,7 @@ class BackTestEngine:
         self.total_fees = 0.0
         self.last_target_pct = None
         self.fee_tiers = [
-            (0, 0.0040),       # $0–$10k => 0.40%
+            (0, 0.0000),       # $0–$10k => 0.40%
             (10_000, 0.0035),  # $10k–$50k => 0.35%
             (50_000, 0.0024),  # $50k–$100k => 0.24%
             (100_000, 0.0022), # $100k–$250k => 0.22%

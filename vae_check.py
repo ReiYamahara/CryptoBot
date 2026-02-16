@@ -2,12 +2,12 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from UL_RL_strategy import *
+from VAE_Autoencoder import *
 import joblib
 
 # Assume RollingWindowDataset and LSTM_VAE are already defined/imported
 
-model_path = 'vae_model_epoch7.pth'
+model_path = 'vae_model.pth'
 
 def verify_reconstruction(dataset, scaler):
     # 1. Load Model

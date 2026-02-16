@@ -18,7 +18,9 @@ class MeanReversionStrategy(StrategyBase):
         """
         Input: row['close'] (The current price only)
         """
-        current_price = row['close']
+        latest_candle = row.iloc[-1]
+        
+        current_price = float(latest_candle['close'])
 
         if len(self.price_history) == 0:
             self.price_history.append(current_price)
@@ -50,7 +52,7 @@ class MeanReversionStrategy(StrategyBase):
         if len(self.price_history) < self.window:
             return 0.0
 
-
+        print(f"Current z-score is: {z_score}")
         # 4. Trading Logic
         if z_score < -self.z_threshold:
             self.position = 1.0 # Buy
